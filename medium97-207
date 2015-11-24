@@ -1,0 +1,1218 @@
+Enter file contents here#98 Validate Binary Search Tree
+class Solution {
+public:
+    bool isValidBST(TreeNode* root) {
+        return isValidBST(root, NULL, NULL);
+    }
+    bool isValidBST(TreeNode* root, TreeNode* maxnode, TreeNode* minnode){
+        if(!root) return true;
+        if(minnode&& root->val<=minnode->val || maxnode&& root->val>=maxnode->val) return false;
+        return isValidBST(root->left, root, minnode) && isValidBST(root->right, maxnode, root); //  to set the range for a node min<node<max
+    }
+};// update the range during traversel
+
+#103 Binary Tree ZigZag Level Order traversel, BFS
+In this case using stack or queue is not matter, just use a variable to indicate which sequence to insert in this Level
+Breadth First search, using stack or queue.
+
+class Solution {
+public:
+    vector<vector<int>> zigzagLevelOrder(TreeNode* root) {
+        vector<vector<int>> result;
+        if(!root) return result;
+        queue<TreeNode*> buffer;
+        buffer.push(root);
+        bool start = true;
+        
+        while(!buffer.empty()){
+            int n = buffer.size();
+            vector<int> curr(n);
+            for(int i=0; i<n; i++){
+                int index = start ? i : n-1-i; //from left to right or right to left
+                TreeNode* node = buffer.front();
+                curr[index] = node->val;
+                if(node->left!=NULL) buffer.push(node->left);
+                if(node->right!=NULL) buffer.push(node->right);
+                buffer.pop();
+            }
+            start = !start;
+            result.push_back(curr);
+        }
+        return result;
+    }
+};
+
+#105 Construct Binary Tree from inorder and preorder
+class Solution {
+public:
+    TreeNode* buildTree(vector<int>& preorder, vector<int>& inorder) {
+        return build(0, 0, inorder.size()-1, preorder, inorder);
+    }
+    TreeNode* build(int pre, int instart, int inend, vector<int>& preorder, vector<int>& inorder){
+        if(pre>preorder.size()-1||instart>inend) return NULL; //this node is null
+        TreeNode* root = new TreeNode(preorder[pre]);
+        int index;
+        for(int i=0; i<inorder.size(); i++){
+            if(inorder[i]==root->val) index = i;
+        }//the left part of i in inorder is in left subtree of i
+        root->left = build(pre+1, instart, index-1, preorder, inorder);
+        root->right = build(pre+index-instart+1, index+1, inend, preorder, inorder);
+        return root;
+    }
+};
+pre[0] is the root of the Tree
+find the val of pre[0] in inorder, the left part before pre[0] in inorder is in the left subtree of pre[0]
+1)If there is left subtree, pre[root+1] is the left node of pre[root].
+2)If there is right subtree of pre[root], the length from pre[root] to inorder start(root left subtree part) in inorder is l;
+then in preorder, pre[root] + l is the left subtree of l, then pre[root]+l+1 is the right child of root.
+repeat 1), 2) for each nodes.
+找出两个order之间的关系， 用它们来确定节点。
+
+#106 Construct Binary Tree from inorder and postorder
+class Solution {
+public:
+    TreeNode* buildTree(vector<int>& inorder, vector<int>& postorder) {
+        return build(postorder.size()-1, 0, inorder.size()-1, inorder, postorder);
+    }
+    TreeNode* build(int post, int instart, int inend, vector<int>& inorder, vector<int>& postorder){
+        if(post<0||instart>inend) return NULL;
+        TreeNode* node = new TreeNode(postorder[post]);
+        int index;
+        for(int i=0; i<inorder.size(); i++){
+            if(inorder[i]==node->val)
+                index = i;
+        }
+        node->left = build(post-inend+index-1, instart, index-1, inorder, postorder);
+        node->right= build(post-1, index+1, inend, inorder, postorder);
+        return node;
+        
+    }
+};
+
+find the post[last] is the root of the Tree
+the right subtree of root in inorder length is l
+1) left node is post[root-l-1], l before root in postorder are belong to right subtree
+2) right node is post[root-1], if the right subtree exist
+repeat 1), 2) for all the nodes.
+
+#109 Convert Linked List to BST
+using recursive, find the mid point: O(nlogn)
+class Solution {
+public:
+    TreeNode* sortedListToBST(ListNode* head) {
+        return buildBST(head, NULL);
+    }
+    TreeNode* buildBST(ListNode* head, ListNode* tail){
+        if(head==tail) return NULL;   //because the linked list is one way, so left part is always[head, mid], cannot be [head, mid-1]
+                                      //so we cannot using head==tail to determaine the point, only use head->next==tail
+        if(head->next==tail){
+            TreeNode* root = new TreeNode(head->val);
+            return root;
+        }
+        ListNode* fast = head;
+        ListNode* slow = head;//using fast runner, slow runner to finde the mid point
+        while(fast!=tail&&fast->next!=tail){
+            slow = slow->next;
+            fast = fast->next->next;
+        }
+       TreeNode* root = new TreeNode(slow->val);
+       root->left = buildBST(head, slow);
+       root->right = buildBST(slow->next, tail);
+    }
+};
+
+#114 Flattern Binary Tree to Linked List
+class Solution {
+public:
+    void flatten(TreeNode* root) {
+    while(root){    
+        if(root->left&&root->right){
+            TreeNode* tmp = root->left;
+            while(tmp->right){
+                tmp = tmp->right;
+            }//find right most node of left subtree
+            tmp->right = root->right; //add right subtree to the right of right most node in left subtree
+        }
+        
+        if(root->left){
+            root->right = root->left; //move the left subtree to the right node
+            root->left = NULL; //make left node is null
+        }
+        root = root->right;
+    }
+    }
+};
+
+Using recursive:
+class Solution {
+public:
+    void flatten(TreeNode* root) {
+        if(root==NULL||root->left==NULL&&root->right==NULL) return;
+        TreeNode* right = root->right;
+        TreeNode* left =root->left;
+        flatten(left);
+        flatten(right);
+        root->right = left;
+        root->left = NULL;
+        TreeNode* tail = root;
+        while(tail->right) tail = tail->right; //point to the tail
+        tail->right = right;
+        return;
+    }
+};
+
+#116 Populating Next Right point in Each node
+class Solution {
+public:
+    void connect(TreeLinkNode *root) {
+        if(!root||root->left==NULL&&root->right==NULL) return;
+        root->left->next = root->right;
+        if(root->next!=NULL)
+            root->right->next = root->next->left;
+        connect(root->left);
+        connect(root->right);
+        return;
+    }
+};
+
+#120 Triangle
+consider bottom up algorithm
+class Solution {
+public:
+    int minimumTotal(vector<vector<int>>& triangle) {
+        for(int i=triangle.size()-2; i>=0; i--){
+            for(int j=0; j<=i;j++){
+                triangle[i][j] = min(triangle[i+1][j+1], triangle[i+1][j]) + triangle[i][j];//add get minimum sum from the adjance node
+            }
+        }
+    return triangle[0][0];
+    }
+};
+
+#121 Best Time To Buy and Sell Stock, dynamical programming
+class Solution {
+public:
+    int maxProfit(vector<int>& prices) {
+        int minval = INT_MAX; // make sure prices[0] input to minval to compare
+        int profit = 0;
+        for(int i=0; i<prices.size(); i++){
+            if(prices[i]<minval) minval = prices[i];
+            profit = max(profit, prices[i]-minval);
+        }
+    return profit;
+    }
+};
+
+#122 Best Time To Buy and Sell Stock II
+class Solution {
+public:
+    int maxProfit(vector<int>& prices) {
+        if(prices.size()<2) return 0;
+        int profit = 0, curr = 0, i = 1;
+        int minval = prices[0];
+        while(i<prices.size()){
+            if(prices[i]>=prices[i-1]){
+                curr = prices[i] - minval;
+                i++;
+            }
+            else{
+                minval = prices[i];
+                profit += curr;
+                curr = 0;
+                i++;
+            }
+        }
+        profit += curr;
+        return profit;
+    }
+};
+
+#127 Word Ladder
+class Solution {
+public:
+    int ladderLength(string beginWord, string endWord, unordered_set<string>& dict) {
+        if(dict.empty() || dict.find(beginWord)==dict.end() || dict.find(endWord)==dict.end()) return 0;
+        
+        queue<string> q1; //store the next level word need to be lookup
+        q1.push(beginWord);
+        unordered_map<string, int> visited; //<string, distance> store the visited word and avoid dead loop
+        visited[beginWord] = 1;
+        dict.erase(beginWord);
+        
+        while(!q1.empty()){
+            string curr = q1.front();
+            q1.pop();
+            auto itr = dict.begin(); // define iterator to lookup dict
+            while(itr!=dict.end()){
+                string adj = *itr; // copy itr pointed value to adj
+                if(onechardiff(curr, adj)){
+                    visited[adj] = visited[curr] + 1;
+                    if(adj==endWord) return visited[adj];//the first finished one is the shortest one, return distance 
+                    q1.push(adj);
+                    itr = dict.erase(itr);//point to the next element after curr itr, tricky
+                }
+                else
+                    itr++;
+            }
+        }
+        return 0;
+    }
+    bool onechardiff(const string& s1, const string& s2){
+        int diff = 0;
+        for(int i=0; i<s1.size(); i++){
+            if(s1[i]!=s2[i]) diff++;
+            if(diff>1) return false;
+        }
+        return diff == 1;
+    }
+};
+
+#129 Sum Root to Leaf Numbers
+class Solution {
+private:
+    int sum; // pass the values between methods
+public:
+    int sumNumbers(TreeNode* root) {
+        if(!root) return 0;
+        sum = 0;
+        DFS(root, 0);
+        return sum;
+    }
+    
+    void DFS(TreeNode* root, int Currsum){
+        Currsum = Currsum*10 + root->val;
+        if(!root->left&&!root->right){
+            sum += Currsum;
+            return;
+        }
+        if(root->left) DFS(root->left, Currsum);
+        if(root->right) DFS(root->right, Currsum);
+    }
+};
+
+#130 Surrounded Region
+The algorithm is quite simple:
+Use BFS starting from 'O's on the boundary and mark them as 'B', then iterate over the whole board and mark 'O' as 'X' and 'B' as 'O'.
+class Solution {
+public:
+    void BFSboundary(vector<vector<char>>& board, int w, int l){
+        int width = board.size();
+        int length = board[0].size();
+        queue<pair<int, int>> q;
+        board[w][l] = 'B';
+        q.push(make_pair(w, l));
+        
+        while(!q.empty()){
+            pair<int, int> curr = q.front();
+            q.pop();
+            pair<int, int> adj[4] ={
+                {curr.first, curr.second-1},
+                {curr.first, curr.second+1},
+                {curr.first-1, curr.second},
+                {curr.first+1, curr.second}
+            };
+            for(int i=0; i<4; i++){
+                int adjW = adj[i].first;
+                int adjL= adj[i].second;
+                if(adjW>=0 && adjW<width && adjL>=0 && adjL<length && board[adjW][adjL]=='O'){
+                    q.push(make_pair(adjW, adjL));
+                    board[adjW][adjL] = 'B';
+                }
+            }
+        }
+    }
+    
+    void solve(vector<vector<char>>& board) {
+        int width = board.size();
+        if (width == 0) //Add this to prevent run-time error!
+            return;
+        int length = board[0].size();
+        if  (length == 0) // Add this to prevent run-time error!
+            return;
+            
+        for(int i=0; i<width; i++){
+            if(board[i][0]=='O') BFSboundary(board, i, 0);
+            if(board[i][length-1]=='O') BFSboundary(board, i, length-1);
+        }
+        for(int i=0; i<length; i++){
+            if(board[0][i]=='O') BFSboundary(board, 0, i);
+            if(board[width-1][i]=='O') BFSboundary(board, width-1, i);
+        }
+        for(int i=0; i<width; i++){
+            for(int j=0; j<length; j++){
+                if(board[i][j]=='O') board[i][j] = 'X';
+                else if(board[i][j]=='B') board[i][j] = 'O';
+            }
+        }
+    }
+   
+};
+
+#131 Palindrome Partitioning
+backtracking:
+class Solution {
+public:
+    vector<vector<string>> partition(string s) {
+        vector<vector<string>> result;
+        if(s.empty()) return result;
+        vector<string> combination;
+        findCombination(result, combination, s, 0);
+        
+    }
+    
+    void findCombination(vector<vector<string>>& result, vector<string> combination, string& s, int begin){
+        if(begin==s.size()){
+            result.push_back(combination);
+            return;
+        }
+        
+        for(int i=begin; i<s.size(); i++){
+            if(isPalindrome(s, begin, i)){
+                combination.push_back(s.substr(begin, i-begin+1));
+                findCombination(result, combination, s, i+1);
+                combination.pop_back();
+            }
+        }
+    }
+    
+    bool isPalindrome(string& s, int begin, int end){
+        while(begin<=end){
+            if(s[begin]!=s[end]) return false;
+            begin++;
+            end--;
+        }
+        return true;
+    }
+};
+
+#133 Clone Graph
+using BFS
+/**
+ * Definition for undirected graph.
+ * struct UndirectedGraphNode {
+ *     int label;
+ *     vector<UndirectedGraphNode *> neighbors;
+ *     UndirectedGraphNode(int x) : label(x) {};
+ * };
+ */
+class Solution {
+public:
+    unordered_map<int, UndirectedGraphNode*> nodeMap;
+    
+    UndirectedGraphNode *cloneGraph(UndirectedGraphNode* node) {
+        if(!node) return node;
+        unordered_map<int, UndirectedGraphNode*>::iterator itr = nodeMap.find(node->label);// use index to access specific node
+        if(itr==nodeMap.end()){
+            UndirectedGraphNode* newNode = new UndirectedGraphNode(node->label);//create new node,, do the clone
+            nodeMap[node->label] = newNode;
+            for(int i=0; i<node->neighbors.size(); i++){
+                newNode->neighbors.push_back(cloneGraph(node->neighbors[i]));
+            }
+            return newNode;
+        }
+        else return itr->second;
+    }
+};
+
+
+#134 gas station
+class Solution {
+public:
+    int canCompleteCircuit(vector<int>& gas, vector<int>& cost) {
+        int i, j, N = gas.size();
+        for(i=0; i<N; i+=j){
+            int remind = 0;
+            for(j=1; j<=N; j++){
+                int k =(i+j-1)%N;
+                remind += gas[k]-cost[k];
+                if(remind<0) break;
+            }
+            if(j>N) return i;
+        }
+        return -1;
+    }
+};
+
+#136 Single Number
+NB 的 algorithm, 所有相等的数异或为0，只留下single one
+class Solution {
+public:
+    int singleNumber(vector<int>& nums) {
+        int res = 0;
+        for(int i=0; i<nums.size(); i++){
+            res = nums[i]^res;
+        }
+        return res;
+    }
+};
+
+#137 Single NumberII
+
+The basic idea is to implement a modulo-3 counter (to count how many times "1" occurs) for each bit position.
+Such modulo-3 counter needs two bits (B1,B0) to represent. 
+(B1,B0): 
+(0, 0) : '1' occurs zero times after last resetting,
+(0, 1) : '1' occurs one times after last resetting,
+(1, 0) : '1' occurs two times after last resetting,
+(1, 1) : '1' occurs three times after last resetting, then we need to reset the counter to (0,0)
+So to implement such modulo-3 counters, we need three variables (b0, b1, reset)
+The n-th bit of b0 is the B0 bit of the modulo-3 counter for the n-th bit (n=0..31 assuming int is 32 bit)
+The n-th bit of b1 is the B1 bit of the modulo-3 counter for the n-th bit (n=0..31 assuming int is 32 bit)
+The n-th bit of reset is the reset flag of the modulo-3 counter for the n-th bit (n=0..31 assuming int is 32 bit), 
+
+- b0: can be easily implemented with XOR bit operation,  as b0 = b0^ A[i]
+- b1: B1 will only be set to 1, when B0 (of the n-th bit counter) =1 and the n-th bit of A[i] = 1, and stay '1' until it is reseted. So b1 |=  b0 & A[i]; 
+- The reset flag is set when (B1, B0) = (1,1). So, reset = b0 & b1;
+- The reset operation can be done by b0 = b0 ^ reset and b1 = b1 ^ reset;
+
+After updating the b0, b1, reset with all A[], the b0 will be the final result since if the n-th bit of the to-be-found element is 1, then the times of '1' occurs on the n-th bit is 3*x+1, which is 1 after the modulo 3 opertation.   
+bit之间是互不影响的， 确保每一位出现三次则为0就行。而0对结果没影响， 只有nth bit上出现1，则B1和B0的nth上变化。
+但总体的nth bit上的1之和，最后只等于出现一次的那个数。
+class Solution {
+public:
+    int singleNumber(vector<int>& nums) {
+        int b0 = 0, b1 = 0, reset = 0;
+        for(int i=0; i<nums.size(); i++){
+            b1 = b1|(b0 & nums[i]); 
+            b0 = b0^nums[i];
+            reset = b1 & b0;
+            b1 = b1^reset;
+            b0 = b0^reset;// reset when the number appears n times;
+        }
+        return b0;
+    }
+};
+
+#139 Word Break
+class Solution {
+public:
+    bool wordBreak(string s, unordered_set<string>& wordDict) {
+        s = "!" + s;
+        vector<bool> dpArray(s.size());
+        dpArray[0]=true;
+        for(int i=0; i<s.size(); i++){
+            if(!dpArray[i]) continue; // add speed
+            for(int j=i+1; j<s.size(); j++) {
+                if(dpArray[j]) continue;
+                if(wordDict.find(s.substr(i+1, j-i))!=wordDict.end() && dpArray[i]) //only the former letters can form words--dpArray[i]=1
+                    dpArray[j]=true;
+            }
+        }
+        return dpArray[dpArray.size()-1];
+    }
+};
+
+#141 Linked List Cycle
+class Solution {
+public:
+    bool hasCycle(ListNode *head) {
+        if(head == NULL || head -> next == NULL)    
+            return false;
+        ListNode* fast = head;
+        ListNode* slow = head;
+        while(fast->next && fast->next->next){
+            fast = fast->next->next;
+            slow = slow->next;
+            if(slow==fast) 
+                return true;
+        }
+    return false;
+    }
+};
+
+#142 Linked List Cycle II
+Step 1: Determine whether there is a cycle
+1.1) Using a slow pointer that move forward 1 step each time
+1.2) Using a fast pointer that move forward 2 steps each time
+1.3) If the slow pointer and fast pointer both point to the same location after several moving steps, there is a cycle;
+1.4) Otherwise, if (fast->next == NULL || fast->next->next == NULL), there has no cycle.
+Step 2: If there is a cycle, return the entry location of the cycle
+2.1) L1 is defined as the distance between the head point and entry point
+2.2) L2 is defined as the distance between the entry point and the meeting point
+2.3) C is defined as the length of the cycle
+2.4) n is defined as the travel times of the fast pointer around the cycle When the first encounter of the slow pointer and the fast pointer
+According to the definition of L1, L2 and C, we can obtain:
+•the total distance of the slow pointer traveled when encounter is L1 + L2
+•the total distance of the fast pointer traveled when encounter is L1 + L2 + n * C
+•Because the total distance the fast pointer traveled is twice as the slow pointer, Thus:
+•2 * (L1+L2) = L1 + L2 + n * C => L1 + L2 = n * C => L1 = (n - 1)* C + (C - L2)
+It can be concluded that the distance between the head location and entry location is equal to the distance between the meeting location and the entry location along the direction of forward movement.
+So, when the slow pointer and the fast pointer encounter in the cycle, we can define a pointer "entry" that point to the head, this "entry" pointer moves one step each time so as the slow pointer. When this "entry" pointer and the slow pointer both point to the same location, this location is the node where the cycle begins.
+
+class Solution {
+public:
+    ListNode *detectCycle(ListNode *head) {
+        if(!head) return NULL;
+        ListNode* fast = head;
+        ListNode* slow = head;
+        while(fast->next!=NULL&&fast->next->next!=NULL){
+            fast = fast->next->next;
+            slow = slow->next;
+            if(slow==fast){
+                ListNode* newstart = head;
+                while(newstart!= slow){
+                    newstart = newstart->next;
+                    slow = slow->next;
+                }
+            return slow;
+            }
+        }
+        return NULL;
+    }
+};
+
+#143 Reorder List
+split list into half, reverse second half, then merge them
+class Solution {
+public:
+    void reorderList(ListNode* head) {
+        if(!head||!head->next) return;
+        ListNode* slow = head;
+        ListNode* fast = head;
+        while(fast->next!=NULL&&fast->next->next!=NULL){
+            fast = fast->next->next;
+            slow = slow->next;
+        }
+        ListNode* reversehead = slow->next;
+        slow->next=NULL;
+        reversehead = reverseLinkedList(reversehead);
+        ListNode* curr = head;
+        while(reversehead){
+            //ListNode* temp1 = curr->next;
+            ListNode* temp = reversehead->next;
+            reversehead->next = curr->next;
+            curr->next = reversehead;
+            curr = curr->next->next;
+            reversehead = temp;
+        }
+    }
+    ListNode* reverseLinkedList(ListNode* head){
+        ListNode* fakehead = new ListNode(0);
+        fakehead->next = head;
+        ListNode* curr = head;
+        while(curr->next!=NULL){
+            ListNode* tmp = curr->next;
+            curr->next = tmp->next;
+            tmp->next = fakehead->next;
+            fakehead->next = tmp;
+            
+        }
+        return fakehead->next;
+    }
+};
+
+#144 Binary Tree Preorder Traversal
+class Solution {
+public:
+    vector<int> preorderTraversal(TreeNode* root) {
+        vector<int> result;
+        preorder(root, result);
+        return result;
+    }
+    void preorder(TreeNode* root, vector<int>& result){
+        if(!root) return;
+        result.push_back(root->val);
+        preorder(root->left, result);
+        preorder(root->right, result);
+        return;
+    }
+};
+
+using iterative to save space
+class Solution {
+public:
+    vector<int> preorderTraversal(TreeNode* root) {
+        vector<int> result;
+        if(!root) return result;
+        stack<TreeNode*> treeStack;
+        treeStack.push(root);
+        while(!treeStack.empty()){
+            TreeNode* tmp = treeStack.top();
+            result.push_back(tmp->val);
+            treeStack.pop();
+            if(tmp->right!=NULL) treeStack.push(tmp->right);
+            if(tmp->left!=NULL) treeStack.push(tmp->left);
+        }
+        return result;
+    }
+};
+
+#145 Binary Tree postorder Traversal(hard)
+using iterative
+class Solution {
+public:
+    vector<int> postorderTraversal(TreeNode* root) {
+        vector<int> result;
+        if(!root) return result;
+        stack<TreeNode*> toVisit;
+        TreeNode* currnode = root;
+        TreeNode* lastnode = NULL; //last output node             
+        while(currnode||!toVisit.empty()){
+            if(currnode){
+                toVisit.push(currnode);
+                currnode = currnode->left;
+            }
+            else{
+                TreeNode* topnode = toVisit.top();
+                if(topnode->right!=NULL&&topnode->right!=lastnode) currnode = topnode->right;
+                //using lastnode to avoid dead loop
+                //if the mid node's right node is already input then input itself, otherwise add rightnode to visit list first
+                //if the node does not have right node, just output it
+                else{
+                    result.push_back(topnode->val);
+                    lastnode = topnode;
+                    toVisit.pop();
+                }
+            }
+        }
+        return result;
+    }
+}; 
+
+#147 Insertion Sort List
+class Solution {
+public:
+    ListNode* insertionSortList(ListNode* head) {
+        if(!head||!head->next) return head;
+        ListNode* fakehead = new ListNode(0);
+        fakehead->next = head;
+        ListNode* tail = head; //tail point to the max point so far
+        
+        while(tail->next!=NULL){
+            ListNode* tmp1 = tail->next;
+            if(tmp1->val>tail->val)
+                tail = tail->next;
+            else{
+                ListNode* node = fakehead;
+                while(node->next->val<tmp1->val){
+                    node = node->next;
+                }
+                ListNode* tmp2 = node->next;
+                tail->next = tmp1->next;
+                node->next = tmp1;
+                tmp1->next = tmp2;
+            }
+        }
+        return fakehead->next;
+    }
+};
+
+#148 Sort Linked List:
+Mergesort: O(n) space, O(nlogn) speed
+class Solution {
+public:
+    ListNode* sortList(ListNode* head) {
+        if(!head) return NULL;
+        ListNode* tail = head;
+        while(tail->next!=NULL){
+            tail = tail->next;
+        }
+        return mergeSort(head, tail);
+    }
+    
+    ListNode* mergeSort(ListNode* head, ListNode* tail){
+        if(head==tail) return head;
+        ListNode* mid = getMid(head, tail);
+        ListNode* postSort = mergeSort(mid->next, tail);
+        mid->next = NULL;
+        ListNode* preSort = mergeSort(head, mid);
+        return merge(preSort, postSort);
+    }
+    
+    ListNode* merge(ListNode* l1, ListNode* l2){
+        ListNode* fakehead = new ListNode(0);
+        ListNode* curr = fakehead;
+        while(l1&&l2){
+            if(l1->val<l2->val){
+                curr->next = l1;
+                l1 = l1->next;
+            }
+            else{
+                curr->next = l2;
+                l2 = l2->next;
+            }
+            curr = curr->next;
+        }
+        curr->next = !l1 ? l2 : l1;
+        return fakehead->next;
+    }
+    ListNode* getMid(ListNode* begin, ListNode* end){
+        ListNode* slow = begin;
+        ListNode* fast = begin;
+        while(fast!=end && fast->next!=end){
+            slow = slow->next;
+            fast = fast->next->next;
+        }
+        return slow;
+    }
+};
+
+#150 Evaluate Reverse Polish Notation
+class Solution {
+public:
+    int evalRPN(vector<string>& tokens) {
+        stack<int> operand;
+        for(auto s : tokens){
+            if(s.size()>1||isdigit(s[0]))
+                operand.push(stoi(s)); //make the string to interger
+            else{
+                int x2 = operand.top();
+                operand.pop();
+                int x1 = operand.top();
+                operand.pop();
+                switch(s[0]){   //switch statement cannot applied on string, becuase string is not a type in c++
+                    case '+': x1+=x2; break;
+                    case '-': x1-=x2; break;
+                    case '*': x1*=x2; break;
+                    case '/': x1/=x2; break;
+                }
+                operand.push(x1);
+            }
+        }
+        return operand.top();
+    }
+};
+
+#Flextrade 1:
+To make a string to phone number format, using dash to split group, and at end of the group can allow 2 digits: 
+e.g "1/33/57/2/ 99 -2" -> "133-572-992"
+e.g "1234" -> "12-34" //do not allow 1 digit as a group, and only end can be not-3 digit group
+string solution(string &S) {
+    // write your code in C++11
+    string result = "";
+    if(S.size()<2||S.size()>100){
+        cout<<"this is a debug message"<<endl;
+        return result;
+    }// if the String S length exceed the N's range[2..100]
+    stack<char> Digit;
+    for(int i=0; i<S.size(); i++)
+        if(S[i]-'0'>=0 && S[i]-'0'<=9) Digit.push(S[i]);
+    //input all the digit into stack
+    if(Digit.size()<2){
+        cout<<"this is a debug message"<<endl;
+        return result;
+    }// if digits' number is less than 2
+    while(!Digit.empty()){
+        string temp = "";
+        if(Digit.size()%3==1||Digit.size()%3==2){ 
+            for(int i=0; i<2; i++){
+                temp = Digit.top()+temp;
+                Digit.pop();
+            }
+        }
+         else{
+             for(int i=0; i<3; i++){
+                 temp = Digit.top()+temp;
+
+# Flextrade 2:
+array A, B, output the minimal common number of them.
+If dose not have common numbers, output -1
+#include <vector>
+#include <algorithm>
+
+int solution(vector<int> &A, vector<int> &B) {
+    int n = A.size();
+    int m = B.size();
+    sort(A.begin(), A.end());
+    sort(B.begin(), B.end());
+    int i = 0;
+    for (int k = 0; k<n&&i<m-1; k++) {
+        while (i<m-1&&B[i] < A[k])
+            i++;
+        if (A[k] == B[i])
+            return A[k];
+    }
+    return -1;
+}
+
+# Flextrade 3:
+there are a line of racks to lock bikes.
+the rack is already locked a bike is “used”
+lock a new bike
+1) bike can only be locked on/between the first or the last used racks.
+2) return max distance to the nearest rack
+e.g [-1,1 , 3, 8,9,10]
+the rack must be 5 or 6, max distance is 2, 3-5 or 6-8
+
+// you can use includes, for example:
+// #include <algorithm>
+#include<algorithm>
+// you can write to stdout for debugging purposes, e.g.
+// cout << "this is a debug message" << endl;
+
+int solution(vector<int> &A) {
+    // write your code in C++11
+    if(A.size()<2||A.size()>100000){
+        cout<<"this is a debug message"<<endl;
+        return -1;
+    }// if the length of N dose not meet the required range
+    sort(A.begin(), A.end());
+    int curr_gap = 0;
+    int max_gap = 0; // the max distance from nearest used racks
+    for(int i=1; i<A.size(); i++){
+        curr_gap = A[i] - A[i-1];
+        max_gap = max(max_gap, curr_gap/2);
+    }
+    return max_gap;
+}
+
+#151 Reverse Words in a String
+1) using stringstream, be careful for the tricky part
+class Solution {
+public:
+    void reverseWords(string &s) {
+        string buff;
+        stringstream ss(s);
+        ss>>s;
+        if(s[0]==' ') s =""; // avoid the case ' ', ss will store ' '
+        while(ss>>buff){
+            s = buff + ' ' + s;
+        }
+    }
+};
+
+#152 Maximum Product Subarray
+class Solution {
+public:
+    int maxProduct(vector<int>& nums) {
+        int frontProduct = 1; //contains one number, so can use a sigle number to instead the max value
+        int backProduct = 1;
+        int ans = INT_MIN;
+        
+        for(int i=0; i<nums.size(); i++){
+            frontProduct *= nums[i];
+            backProduct *= nums[nums.size()-i-1];
+            ans = max(ans, max(frontProduct, backProduct));
+            frontProduct = frontProduct==0 ? 1 : frontProduct;
+            backProduct = backProduct==0 ? 1 : backProduct;
+        }
+        return ans;
+    }
+};
+
+The key point of this problem is: there are only two patterns.
+One is "aBcD", and the other is "aBcDe", where I use lowercase to denote a negative number, and use upper case to denote a positive number.
+For the first pattern, the maximum product would be "aBcD";
+and for the second pattern, the maximum product would be "max (aBcD, BcDe)". So above solution code is very elegant and efficient.
+If there is 0 exit treat the array saperate by 0 or 0s
+If there is only one negative value, also treat as saperate by it. "ABaCD" as max(AB,CD)
+
+#153 Find Minimum in Rotated Sorted array
+class Solution {
+public:
+    int findMin(vector<int>& nums) {
+        int low = 0, high = nums.size()-1;
+        while(low<high){
+            int mid = (low+high)/2;
+            if(nums[mid]>nums[high])
+                low = mid+1;
+            else
+                high = mid;
+        }
+        return nums[high];
+    }
+};
+equal to search the rotate point
+
+
+#162 Find Peak element
+•If num[i-1] < num[i] > num[i+1], then num[i] is peak
+•If num[i-1] < num[i] < num[i+1], then num[i+1...n-1] must contains a peak
+•If num[i-1] > num[i] > num[i+1], then num[0...i-1] must contains a peak
+•If num[i-1] > num[i] < num[i+1], then both sides have peak (n is num.length)
+e.g [10,9,8,7,3,6,4], 10 is the returned peak, only peak one peak, and the edge can count a peak
+tricky: while(low<high-1) to make sure there is a mid between high or low, or just choose the higher one
+class Solution {
+public:
+    int findPeakElement(vector<int>& nums) {
+        int high = nums.size()-1;
+        int low = 0;
+        while(low<high-1){
+            int mid = (low+high)/2;
+            //if(nums[mid]<INT_MIN||nums[mid]>INT_MAX) return -1;
+            if(nums[mid]>nums[mid-1] && nums[mid]>nums[mid+1])
+                return mid;
+            else if(nums[mid]>nums[mid+1])
+                high = mid-1;  //left part must have a peak
+                else 
+                low = mid+1; //right part must have a peak
+        }
+        return nums[low]>nums[high] ? low : high;
+    }
+};
+
+#166 Fraction to Recurring Decimal
+遇到困难时想想一般分几种情况：
+3.Handle all the cases of 
+(1) no fractional part; //end before adding '.'
+(2) fractional part does not recur;  //end when rmd==0
+(3) fractional part recurs respectively. //end when find a existed rmd
+
+class Solution {
+public:
+    string fractionToDecimal(int numerator, int denominator) {
+        if(!numerator) return "0"; //no fraction part
+        string result;
+        if(numerator<0 ^ denominator<0) result += '-'; //sign control
+        long numer = numerator<0 ? (-1)*(long)numerator : (long)numerator;
+        long denom = denominator<0 ? (-1)*(long)denominator : (long)denominator; //get abusolute and make the form to long control overflow
+        long integral = numer/denom;
+        result += to_string(integral);
+        long rmd = numer%denom;
+        if(!rmd) return result;
+        result += '.';
+        unordered_map<long, long> mp;//store the existed remainder and its exist position, if it exist again, enclose it
+        rmd*=10;
+        while(rmd){
+            if(mp.find(rmd)!=mp.end()){
+                result.insert(mp[rmd],1,'('); //find the first position of the repeat part, insert '('
+                result += ')'; //enclose the repeat part 
+                break;
+            }
+            long quot = rmd/denom;
+            mp[rmd] = result.size(); //position of quot
+            result += to_string(quot);
+            rmd = (rmd%denom)*10;
+        }
+        return result;
+    }
+};
+
+#173 Binary Search Tree iterator
+class BSTIterator {
+private:
+    stack<TreeNode*> st;
+public:
+    BSTIterator(TreeNode *root) {
+        find_next(root);
+    }
+
+    /** @return whether we have a next smallest number */
+    bool hasNext() {
+        return !st.empty();
+    }
+
+    /** @return the next smallest number */
+    int next() {
+        TreeNode* top = st.top();
+        st.pop();
+        if(top->right!=NULL)
+            find_next(top->right);
+        return top->val;
+    }
+
+    void find_next(TreeNode* root){
+        while(root!=NULL){
+            st.push(root);
+            root = root->left;
+        }
+    }
+};
+
+/**
+ * Your BSTIterator will be called like this:
+ * BSTIterator i = BSTIterator(root);
+ * while (i.hasNext()) cout << i.next();
+ */
+ 从小到大输出 BST
+
+ #179 Largest Number
+ class Solution {
+public:
+    string largestNumber(vector<int>& nums) {
+        string result;
+        sort(nums.begin(), nums.end(), [](int a, int b){
+            return to_string(a)+to_string(b)>to_string(b)+to_string(a);
+        }); //customer compare function
+        for(auto i:nums){
+            result += to_string(i);
+        }
+        return result[0]=='0'? "0" : result; // handle the [0,0] case
+    }
+};
+
+#187 Repeated DNA sequence
+class Solution {
+public:
+    vector<string> findRepeatedDnaSequences(string s) {
+        vector<string> res;
+        if(s.size()<=10) return res;
+        unordered_set<int> exist;
+        string curr;
+        int curr_num;
+        for(int i=0; i<=s.size()-10; i++){
+            curr = s.substr(i,10);
+            curr_num = s_to_i(curr);
+            if(exist.find(curr_num)==exist.end())
+                exist.insert(curr_num);
+            else if(find(res.begin(), res.end(), curr)==res.end())
+                res.push_back(curr);
+        }
+        return res;
+    }
+    
+    int s_to_i(string& A){
+        int i,res=0;
+        for(i=0;i<10;i++){
+            if(A[i]=='A')
+                res+=0;
+            else if(A[i]=='C')
+                res+=1;
+            else if(A[i]=='T')
+                res+=2;
+            else if(A[i]=='G')
+                res+=3;
+            res=res<<2;
+        }
+        return res;
+    }
+};
+/*time limited by using switch..case
+int s_to_i(string& s){
+        int res = 0;
+        for(int i=0; i<10; i++){
+            switch(s[i]){
+                case 'A': res+=0; break;
+                case 'C': res+=1; break;
+                case 'G': res+=2; break;
+                case 'T': res+=3; break;
+            }
+            res<<2;
+        }
+        return res;
+    }
+*/
+    
+#199 Binary Right Side view = find the rightest node for each level
+class Solution {
+public:
+    vector<int> rightSideView(TreeNode* root) {
+        vector<int> res;
+        right_side(root, res, 0);
+        return res;
+    }
+    void right_side(TreeNode* root, vector<int>& res, int level){
+        if(!root) return;
+        if(level==res.size())
+            res.push_back(root->val);
+        right_side(root->right, res, level+1);// using the rightest node to ocuppy the position
+        right_side(root->left, res, level+1);
+        return;
+    }
+};
+
+#200 Number of island
+class Solution {
+public:
+    int numIslands(vector<vector<char>>& grid) {
+        if(grid.empty()) return 0; //no grid[0]
+        int row_len = grid.size(), col_len = grid[0].size(), count=0;
+        vector<vector<bool>> visited(row_len, vector<bool>(col_len,false)); //initialize visited table
+        for(int row=0; row<row_len; row++)
+            for(int col=0; col<col_len; col++)
+                if(grid[row][col]=='1'&& !visited[row][col]){
+                    count++;
+                    markIsland(grid, visited, row, col);
+                }
+        return count;
+    }
+    
+    void markIsland(vector<vector<char>>& grid, vector<vector<bool>>& visited, int row, int col){
+        int row_len = grid.size(), col_len = grid[0].size();
+        visited[row][col]=true;
+        if(row>0 && grid[row-1][col]=='1' && !visited[row-1][col])
+            markIsland(grid, visited, row-1, col);
+        if(row<row_len-1 && grid[row+1][col]=='1' && !visited[row+1][col])
+            markIsland(grid, visited, row+1, col);
+        if(col>0 && grid[row][col-1]=='1' && !visited[row][col-1])
+            markIsland(grid, visited, row, col-1);
+        if(col<col_len-1 && grid[row][col+1]=='1' && !visited[row][col+1])
+            markIsland(grid, visited, row, col+1);
+    }
+    
+};
+
+#201 bitwise AND of Number Range
+class Solution {
+public:
+    int rangeBitwiseAnd(int m, int n) {
+        if(m==n) return m;
+        int res = rangeBitwiseAnd(m>>1, n>>1); //right shift by 1 bit, compare the new num
+        return res<<1; //to the upper level
+    }
+};
+
+answer is the common prefix of m and n, other part will be 0, and if there is no common prefix of M and n
+the range from m to n on each bit must appear 0, so the answer still 0
+e.g m 5 -> 101, n 7 -> 111
+101!=111 -> right shift 10!=11 ->right shift -> 1=1
+retrun left shift 10 -> left shift 100
+return 100 == 4, answer is 4
+
+207 Course Schedule
+Using Topology sort: find the lowest degree node first
+class Solution {
+public:
+    bool canFinish(int numCourses, vector<pair<int, int>>& prerequisites) {
+        vector<unordered_set<int>> adj(numCourses); //store adjance node for each node, must given the size of vector
+        for(auto item : prerequisites)
+            adj[item.second].insert(item.first);
+        
+        vector<int> degree(numCourses, 0);
+        for(int i=0; i<numCourses; i++)
+            for(auto it = adj[i].begin(); it != adj[i].end(); ++ it)
+                ++degree[*it];
+        
+        for(int n=0, i; n<numCourses; ++n){ //loop for numCourses times
+            for(i=0; i<numCourses && degree[i]!=0; ++i); //find the first lowest node(degree is 0)
+            if(i==numCourses) 
+                return false; // no lowest node
+            degree[i] = -1;
+            for(auto it = adj[i].begin(); it != adj[i].end(); ++ it)
+                --degree[*it];
+        }
+        return true;
+    }
+};
+
+DFS: finding cycle: if tere is a cycle, return false
+bool canFinish(int numCourses, vector<vector<int>>& prerequisites)
+{
+    vector<unordered_set<int>> matrix(numCourses); // save this directed graph
+    for(int i = 0; i < prerequisites.size(); ++ i)
+        matrix[prerequisites[i][1]].insert(prerequisites[i][0]);
+
+    unordered_set<int> visited;
+    vector<bool> flag(numCourses, false);
+    for(int i = 0; i < numCourses; ++ i)
+        if(!flag[i])
+            if(DFS(matrix, visited, i, flag))
+                return false;
+    return true;
+}
+bool DFS(vector<unordered_set<int>> &matrix, unordered_set<int> &visited, int b, vector<bool> &flag)
+{
+    flag[b] = true;
+    visited.insert(b);
+    for(auto it = matrix[b].begin(); it != matrix[b].end(); ++ it)
+        if(visited.find(*it) != visited.end() || DFS(matrix, visited, *it, flag))
+            return true;
+    visited.erase(b);
+    return false;
+}
+
+#209 Minimum Size subarray Sum
+class Solution {
+public:
+    int minSubArrayLen(int s, vector<int>& nums) {
+        int start=0, currSum=0, minlen = INT_MAX;
+        for(int i=0; i<nums.size(); i++){
+            currSum+=nums[i];
+            while(currSum>=s){
+                minlen = min(minlen, i-start+1);
+                currSum-=nums[start++]; // to find a minimum len from current, must minus the firs position, nor the length will not be min
+            }
+        }
+        return minlen==INT_MAX ? 0 : minlen;
+    }
+};
