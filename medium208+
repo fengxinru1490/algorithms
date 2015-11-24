@@ -1,0 +1,614 @@
+Enter file contents here
+
+#208 Implement Trie PrefixTree
+class TrieNode {
+public:
+    // Initialize your data structure here.
+        char content;
+        bool isend; // check if the node is an end of the word
+        int shared; // the number of node shared..using vector size?
+        vector<TrieNode*> children;
+        
+        TrieNode(){
+            this->content = ' ';
+            this->isend = false;
+            this-> shared = 0;
+        } //constructor for root
+        
+        TrieNode(char ch){
+            this->content = ch;
+            this->isend = false;
+            this->shared = 0;
+        }//contructor for nodes;
+        
+        TrieNode* subNode(char ch){
+            if(!children.empty()){
+                for(auto child : children){
+                    if(child->content == ch)
+                        return child;
+                }
+            }
+            return nullptr;
+        } //check if ch is the next char of current node
+        ~TrieNode(){
+            for(auto child : children)
+                delete child;
+        }
+};
+
+class Trie {
+public:
+    Trie() {
+        root = new TrieNode();
+    }
+
+    // Inserts a word into the trie.
+    void insert(string word) {
+        if(search(word)) return; // word already exist
+        TrieNode* curr = root;
+        for(auto ch : word){
+            TrieNode* child = curr->subNode(ch);
+            if(child!=nullptr){
+                curr = child;
+            }
+            else{
+                TrieNode* newNode = new TrieNode(ch);
+                curr->children.push_back(newNode);
+                curr = newNode;
+            }
+            ++curr->shared;
+        }
+        curr->isend = true;//mark the end
+    }
+
+    // Returns if the word is in the trie.
+    bool search(string word) {
+        TrieNode* curr = root;
+        for(auto ch : word){
+            curr = curr->subNode(ch);
+            if(curr == nullptr)
+                return false;
+        }
+        return curr->isend == true;
+    }
+
+    // Returns if there is any word in the trie
+    // that starts with the given prefix.
+    bool startsWith(string prefix) {
+        TrieNode* curr = root;
+        for(auto ch : prefix){
+            curr = curr->subNode(ch);
+            if(curr == nullptr)
+                return false;
+        }
+        return true;
+    }
+
+private:
+    TrieNode* root;
+};
+
+// Your Trie object will be instantiated and called as such:
+// Trie trie;
+// trie.insert("somestring");
+// trie.search("key");
+#209 Minimum Size subarray Sum
+class Solution {
+public:
+    int minSubArrayLen(int s, vector<int>& nums) {
+        int start=0, currSum=0, minlen = INT_MAX;
+        for(int i=0; i<nums.size(); i++){
+            currSum+=nums[i];
+            while(currSum>=s){
+                minlen = min(minlen, i-start+1);
+                currSum-=nums[start++]; // to find a minimum len from current, must minus the firs position, nor the length will not be min
+            }
+        }
+        return minlen==INT_MAX ? 0 : minlen;
+    }
+};
+
+#210 Course Schedule Initialize
+class Solution {
+public:
+    vector<int> findOrder(int numCourses, vector<pair<int, int>>& prerequisites) {
+        vector<unordered_set<int>> adj(numCourses); //store the courses required current one
+        vector<int> result;
+        for(auto item : prerequisites)
+            adj[item.second].insert(item.first);
+        
+        vector<int> degree(numCourses, 0); //store the degree for each course
+        for(int i=0; i<numCourses; i++)
+            for(auto it = adj[i].begin(); it != adj[i].end(); ++ it)
+                ++degree[*it];
+                
+        for(int n=0, i; n<numCourses; ++n){ //output node by degree low to high
+            for(i=0; i<numCourses && degree[i]!=0; ++i);
+            if(i==numCourses) 
+                return {}; 
+            result.push_back(i);
+            degree[i]=-1;
+            for(auto it: adj[i])
+                --degree[it];
+        }
+        return result;
+    }
+};
+
+#211 Add and Search word // runtime error
+class TrieNode {
+public:
+    // Initialize your data structure here.
+        char content;
+        bool isend; // check if the node is an end of the word
+        vector<TrieNode*> children;
+        
+        TrieNode(){
+            this->content = '.';
+            this->isend = false;
+        } //constructor for root
+        
+        TrieNode(char ch){
+            this->content = ch;
+            this->isend = false;
+        }//contructor for nodes;
+        
+        TrieNode* subNode(char ch){
+            if(!children.empty()){
+                for(auto child : children){
+                    if(child->content == ch||child->content == '.')
+                        return child;
+                }
+            }
+            return nullptr;
+        } //check if ch is the next char of current node
+        ~TrieNode(){
+            for(auto child : children)
+                delete child;
+        }
+};
+
+class WordDictionary {
+private:
+    TrieNode* root;
+public:
+    WordDictionary(){
+        root = new TrieNode();
+    }
+    // Adds a word into the data structure.
+    void addWord(string word) {
+        TrieNode* curr = root;
+        for(auto ch : word){
+            TrieNode* child = curr->subNode(ch);
+            if(child!=nullptr)
+                curr = child;
+            else{
+                TrieNode* newNode = new TrieNode(ch);
+                curr->children.push_back(newNode);
+                curr = newNode;
+            }
+        }
+        curr->isend = true;
+    }
+
+    // Returns if the word is in the data structure. A word could
+    // contain the dot character '.' to represent any one letter.
+    bool search(string word) {
+        TrieNode* curr = root;
+        for(auto ch : word){
+            TrieNode child = curr->subNode(ch);
+            if(child = nullptr)
+                return false;
+            curr = child;
+        }
+        return curr->isend;
+    }
+};
+
+// Your WordDictionary object will be instantiated and called as such:
+// WordDictionary wordDictionary;
+// wordDictionary.addWord("word");
+// wordDictionary.search("pattern")
+
+#213 house robber
+class Solution {
+public:
+    int rob(vector<int>& nums) {
+        int n = nums.size();
+        if(n<2) return n ? nums[0] : 0;
+        return max(rob_val(nums, 0, n-1), rob_val(nums, 1, n));
+    }
+    
+    int rob_val(vector<int>& nums, int start, int end){
+        int temp = 0, curr=0, pre=0;
+        for(int i=start; i<end; i++){
+            temp = max(curr, nums[i]+pre);
+            pre = curr;
+            curr = temp; 
+        }
+        return curr;
+    }
+};
+
+215# find kth largest number
+class Solution {
+public:
+    int findKthLargest(vector<int>& nums, int k) {
+       buildHeap(nums);
+       for(int i=0; i<k; i++){
+           swap(nums[0], nums[heap_size-1]);
+           heap_size--;
+           maxHeapify(nums, 0, heap_size);
+       } 
+       return nums[heap_size];
+    }
+    void maxHeapify(vector<int>& nums, int idx, int size){
+        int largest = idx, n = nums.size();
+        int left = (idx<<1)+1;
+        int right = (idx+1)<<1;
+        if(left<size&&nums[left]>nums[largest])
+            largest = left;
+        if(right<size&&nums[right]>nums[largest])
+            largest = right;
+        if(largest!=idx){
+            swap(nums[largest],nums[idx]);
+            maxHeapify(nums, largest, size);
+        }
+    }
+    
+    void buildHeap(vector<int>& nums){
+        heap_size = nums.size();
+        for(int i=(heap_size>>1)-1; i>=0; i--)
+            maxHeapify(nums, i, heap_size);
+    }
+    private:
+    int heap_size; //the findklargest influence the size of heap, using global variable
+    //time complex is O(n) build heap, + O(klogn) find kth largest
+};
+
+#216 Combination Sum III
+class Solution {
+public:
+    vector<vector<int>> combinationSum3(int k, int n) {
+        vector<vector<int>> result;
+        vector<int> combination;
+        findCombination(result, combination, 1, k, n);
+        return result;
+    }
+    
+    void findCombination(vector<vector<int>>& result, vector<int>& combination, int begin, int k, int remain){
+        if(remain==0 && k==0){
+            result.push_back(combination);
+            return;
+        }
+        for(int i=begin; i<10&&i<=remain; i++){
+            combination.push_back(i);
+            findCombination(result, combination, i+1, k-1, remain-i);
+            combination.pop_back();
+        }
+    }
+    
+};
+
+#220 Contains Duplicate III
+class Solution {
+public:
+    bool containsNearbyAlmostDuplicate(vector<int>& nums, int k, int t) {
+        set<int> window;
+        for(int i=0; i<nums.size(); i++){
+            if(i>k) window.erase(nums[i-k-1]); //delete the element beyond k from i
+            auto it = window.lower_bound(nums[i]-t); //nums[j]>=nums[i]-t --> nums[i]-nums[j]<=t
+            if(it!=window.end() && *it-t<=nums[i])  //nums[j]-nums[i]<=t
+                return true;
+            window.insert(nums[i]);
+        }
+        return false;
+    }
+};
+
+#221 Maximal Square
+matrix dynamic programming
+class Solution {
+public:
+    int maximalSquare(vector<vector<char>>& matrix) {
+        int m = matrix.size();
+        if(!m) return 0;
+        int n = matrix[0].size();
+        
+        vector<vector<int>> size(m, vector<int>(n,0));
+        int maxsize = 0;
+        for(int j=0; j<n; j++){
+            size[0][j] = matrix[0][j]-'0';
+            maxsize = max(maxsize, size[0][j]);
+        }//for first row
+        
+        for(int i=0; i<m; i++){
+            size[i][0] = matrix[i][0]-'0';
+            maxsize = max(maxsize, size[i][0]);
+        }// for first col
+        
+        for(int i=1; i<m; i++)
+            for(int j=1; j<n; j++){
+                if(matrix[i][j]=='0')
+                    size[i][j]==0;
+                else{    
+                    size[i][j] = min(size[i-1][j-1], min(size[i-1][j], size[i][j-1])) + 1;
+                    maxsize = max(maxsize, size[i][j]);
+                }
+            }
+        return maxsize*maxsize;
+    }
+};
+
+#222 Count Complete Tree node
+class Solution {
+public:
+    int countNodes(TreeNode* root) {
+        if(!root) return 0;
+        int h_left=1, h_right=1;
+        TreeNode* leftnode = root;
+        TreeNode* rightnode = root;
+        while(leftnode->left!=NULL){
+            h_left++;
+            leftnode = leftnode->left;
+        }
+        while(rightnode->right!=NULL){
+            h_right++;
+            rightnode = rightnode->right;
+        }
+        if(h_left==h_right)
+            return (1<<h_right)-1; //pow(2, h_right)-1
+        else
+            return 1+countNodes(root->left)+countNodes(root->right);
+    }
+};
+time complex is h + h-1 + h-2 + ... + 1 -> h^2, h = logn, so is O(logn*logn)
+
+#224 Basic Calculator
+class Solution {
+public:
+    int calculate(string s) {
+        stack<int> signs;
+        signs.push(1);
+        int sign=1, ans=0, num=0;
+        
+        for(auto ch : s){
+            if(ch<='9' && ch>='0')
+                num = num*10 + ch-'0';//record current number
+            else if(ch =='+' || ch=='-'){
+                ans = ans + sign * signs.top() * num;
+                num = 0;
+                sign = ch=='+'? 1 : -1; //store for next character
+            }
+            else if(ch=='('){
+                signs.push(sign*signs.top());
+                sign = 1;
+            }
+            else if(ch==')'){   //meet +, - or ) do the caculation for current num
+                ans = ans + sign * signs.top() * num;
+                num = 0;
+                signs.pop();
+            }
+        }
+        if(num)
+            ans = ans + sign * signs.top() * num;
+        return ans;
+    }
+};
+
+#230 Kth Smallest Element in a BST
+class Solution {
+public:
+    int kthSmallest(TreeNode* root, int k) {
+        stack<TreeNode*> st;
+        TreeNode* curr = root;
+        while(curr || !st.empty()){
+            while(curr){
+                st.push(curr);
+                curr = curr->left;
+            }
+            curr = st.top();
+            if(--k==0)
+                return curr->val;
+            st.pop();
+            curr = curr->right;  //curr always point to the next smallest node in the tree
+        }
+    }
+};
+
+
+#236 Lowest Common Ancestor of binary Tree
+duplicated value allowed in this problem, do not compare the value root->val==p->val, compare the pointer instead, root == p
+class Solution {
+public:
+    TreeNode* lowestCommonAncestor(TreeNode* root, TreeNode* p, TreeNode* q) {
+        if(root==p || root==q || root==NULL)
+            return root;
+        TreeNode* left = lowestCommonAncestor(root->left, p, q);
+        TreeNode* right = lowestCommonAncestor(root->right, p, q);
+        return left&&right ? root : left ? left : right;
+    }
+};
+
+#238 Prodect of Array except self
+class Solution {
+public:
+    vector<int> productExceptSelf(vector<int>& nums) {
+        int n = nums.size();
+        if(n<=1) return nums;
+        vector<int> result(n, 1);
+        for(int i=0; i<n; i++){
+            if(i==0) 
+                result[i]=1;
+            else
+                result[i] = result[i-1]*nums[i-1]; // the product of number before i
+        }
+        
+        int res_p=1; //the product from back
+        for(int i=n-1; i>=0; i--){
+            result[i]*=res_p;
+            res_p*=nums[i];
+        }
+        return result;
+    }
+};
+//in this problem, there is 0 exist. To avoid /0 cause runtime error, for each i, we saperate the array by before i partI and after i partII.
+// then we get the product of partI and partII
+
+#240 Search 2D matrix
+class Solution {
+public:
+    bool searchMatrix(vector<vector<int>>& matrix, int target) {
+        int row_len = matrix.size();
+        if(!row_len) return false;
+        int col_len = matrix[0].size();
+        int r=0, c=col_len-1;
+        while(r<row_len&&c>=0){
+            if(target==matrix[r][c])
+                return true;
+            else if(target<matrix[r][c])
+                c--;  //if smaller than curr num move to left
+            else
+                r++;  // if bigger than curr num move down, because right is already bigger than target, no need to compare
+        }
+        return false;
+     }
+};
+
+#241 Different Ways to Add Parenthese
+/*Input: "2*3-4*5"
+(2*(3-(4*5))) = -34
+((2*3)-(4*5)) = -14
+((2*(3-4))*5) = -10
+(2*((3-4)*5)) = -10
+(((2*3)-4)*5) = 10
+
+Output: [-34, -14, -10, -10, 10]*/
+
+class Solution {
+public:
+    vector<int> diffWaysToCompute(string input) {
+        vector<int> result;
+        int n=input.size();
+        for(int i=0; i<n; i++){
+            char curr = input[i];
+            if(curr=='+'||curr=='-'||curr=='*'){
+                vector<int> result1 = diffWaysToCompute(input.substr(0,i));
+                vector<int> result2 = diffWaysToCompute(input.substr(i+1));
+                for(auto n1 : result1)
+                    for(auto n2 : result2){
+                        if(curr=='+')
+                            result.push_back(n1+n2);
+                        else if(curr=='-')
+                            result.push_back(n1-n2);
+                        else
+                            result.push_back(n1*n2);
+                    }
+            }
+        }
+        if(result.empty())
+            result.push_back(stoi(input));
+        return result;
+    }
+};
+
+#260 Single Number III
+class Solution {
+public:
+    vector<int> singleNumber(vector<int>& nums) {
+        int AxorB = 0;
+        for(auto item : nums)
+            AxorB = AxorB^item;
+        //find the first diff bit between A and B, also is the firs 1 in A^B
+        int lowest_bit = AxorB & (~(AxorB-1)); // ensure the last diff bit is the only 1
+        int A =0;
+        for(auto item : nums){
+            if(item & lowest_bit)
+                A = A^item; //XOR all the number with 1 on lowest bit, the remainder one will be A, because B does not have 1 on lowest bit
+        }
+        int B = AxorB^A;
+        vector<int> result = {A, B};
+        return result;
+    }
+};
+
+#264 Ugly Number II
+class Solution {
+public:
+    int nthUglyNumber(int n) {
+        if(n<1) return 0;
+        vector<int> buf;
+        int id2=0, id3=0, id5=0, res = 1;// id2 is the index in buf that used to * 2 in next round generation
+        buf.push_back(res);
+        while(--n){
+            int v2=2*buf[id2];
+            int v3=3*buf[id3];
+            int v5=5*buf[id5];
+            res = min(v2, min(v3, v5));
+            buf.push_back(res);
+            id2 += (res==v2); //if v2 is the min in this round add 1, if false add 0
+            id3 += (res==v3);
+            id5 += (res==v5);
+        }
+        return res;
+    }
+};
+
+#268 Missing Number
+class Solution {
+public:
+    int missingNumber(vector<int>& nums) {
+        if(!nums.size()) return 0;
+        int sum1 = nums.size()*(nums.size()+1)/2;
+        int sum2 = 0;
+        for(int i : nums)
+            sum2 += i;
+        return sum1-sum2;
+    }
+};
+
+#273 Integer to English Words
+class Solution {
+public:
+    string numberToWords(int num) {
+        vector<string> index = {" Thousand", " Million", " Billion"};
+        string res = hundredStr(num%1000);
+        num/=1000;
+        for(int i=0; i<3&&num>0; i++){
+                res = num%1000 ? hundredStr(num%1000) + index[i] + " " + res : res;
+                num/=1000;
+        }
+        while(res.back()==' ')
+            res.pop_back();
+        return res.empty() ? "Zero" : res;
+    }
+    
+    string hundredStr(int num) {
+        vector<string> below_20={"","One","Two","Three","Four","Five","Six","Seven","Eight","Nine","Ten",
+        "Eleven","Twelve","Thirteen","Fourteen","Fifteen","Sixteen","Seventeen","Eighteen","Nineteen"};
+        vector<string> below_100={"","","Twenty","Thirty","Forty","Fifty","Sixty","Seventy","Eighty","Ninety"};
+        string result;
+        result = (num%100)<20 ? below_20[num%100] : below_100[(num%100)/10] + (num%10 ? " " + below_20[num%10] : "");
+        if(num>99)
+            result = below_20[num/100] + " Hundred" + (num%100 ? " " + result : "");
+        return result;
+    }
+};
+
+#274 H-Index
+class Solution {
+public:
+    int hIndex(vector<int>& citations) {
+        sort(citations.begin(), citations.end());
+        int N = citations.size();
+        int max_h = 0;
+        for(int i=0; i<N; i++){
+            if((N-i)<=citations[i])
+                return N-i;
+        }
+    }
+};
+
+There are h paper citations equal or more than h
+There are N-h paper citations equal or less than h
+N-i represent h, from page h, the citations number is bigger than h
