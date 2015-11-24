@@ -1,2 +1,3 @@
 # algorithms
-algorithms problems 
+algorithms problems from leetcode
+by category
