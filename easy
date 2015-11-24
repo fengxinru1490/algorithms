@@ -1,0 +1,885 @@
+Enter file contents here
+#6 ZigZag
+class Solution {
+public:
+    string convert(string s, int numRows) {
+        int len = s.length();
+        if(numRows == 1||numRows>=len) return s;
+        vector<string> b(numRows);
+        int idx = 2*(numRows - 1); // the index for mod
+        for(int i = 0; i<len; i++){
+            int k = i % idx;
+            if(k <= numRows - 1){ b[k].push_back(s[i]);}
+            else {b[idx - k].push_back(s[i]);}
+        } 
+        string result = "";
+        for(int l = 0; l<numRows; l++)
+            for(int j = 0; j<int(b[l].size());j++){
+                result += b[l][j];
+            }
+        
+        
+        return result;
+    }
+};
+
+#8 string to integer
+class Solution {
+public:
+    int myAtoi(string str) {
+        long int result = 0;
+        int index = 0;
+        long int num = 0;
+        int flag = 1;
+        if(str == "") return 0;
+        while(str[index]==' '){
+            index++;
+        }
+        if(str[index] == '-') flag = -1;
+        if(str[index] == '-'||str[index] == '+'){
+            index++;
+            if(str[index]=='-'||str[index]=='+') return 0;
+        }
+        while(isdigit(str[index])){
+            result *= 10;
+            result += (str[index]-'0');
+            index++;
+            num = result * flag;
+        if(num > INT_MAX) return INT_MAX;
+        else if (num < INT_MIN) return INT_MIN; //overflow must in for loop, otherwise will return INT_MIN in both cases
+        }
+
+        return num;
+    }
+};
+
+#9 palindrome number 回文数
+class Solution {
+public:
+    bool isPalindrome(int x) {
+        if(x<0) return false;
+        int rev_num = 0;  //x's reverse number
+        int num = x;
+        while(num>0){
+            rev_num *= 10;
+            rev_num += num%10;
+            num /= 10;
+        }
+        if (rev_num == x) return true;
+        else return false;
+    }
+};
+
+#13 Roman to integer
+class Solution {
+public:
+    int value(char c){
+        switch(c){
+            case 'I':return 1;
+            case 'V':return 5;
+            case 'X':return 10;
+            case 'L':return 50;
+            case 'C': return 100;
+            case 'D': return 500;
+            case 'M': return 1000;
+            default: return 0;
+        }
+    }
+    
+    int romanToInt(string s) {
+        if(s =="") return 0;
+        int result = value(s[s.size()-1]);
+        for(int i = s.size() -2 ; i>=0; i--){
+            if(value(s[i]) < value(s[i+1])) result -= value(s[i]);
+            else result = value(s[i]) + result;
+        }
+        return result;
+    }
+};
+
+#14 longest common prefix 最长前缀
+class Solution {
+public:
+    string longestCommonPrefix(vector<string>& strs) {
+        string result ="";
+        if(strs.size()==0) return result;
+        for(int i=0; i<strs[0].size(); i++){
+            char temp = strs[0][i];
+            for(int j=0; j<strs.size(); j++){
+                if(strs[j][i]!= temp){
+                    return result;
+                }
+            }
+            result += temp;
+        }
+        return result;
+    }
+};
+
+#19 remove the Nth node from the end of linked list
+/**
+ * Definition for singly-linked list.
+ * struct ListNode {
+ *     int val;
+ *     ListNode *next;
+ *     ListNode(int x) : val(x), next(NULL) {}
+ * };
+ */
+
+class Solution {
+public:
+    ListNode* removeNthFromEnd(ListNode* head, int n) {
+        ListNode* fakehead = new ListNode(0);//use fakenode to consider delete first element situation
+        fakehead->next = head;
+        ListNode* head1 = fakehead;
+        ListNode* head2 = fakehead;
+        for(int i=1; i<=n; i++)
+            head2 = head2->next;
+        while(head2->next!=NULL){
+            head1 = head1->next;
+            head2 = head2->next;
+        }
+        head1->next = head1->next->next;
+        return fakehead->next;
+    }
+};
+#19 Valid Parenthese
+class Solution {
+public:
+    map<char, char> pmap;
+    Solution(){
+        pmap.insert(pair<char,char>('(',')'));
+        pmap.insert(pair<char,char>('{','}'));
+        pmap.insert(pair<char,char>('[',']'));
+    }
+    
+    bool isValid(string s) {
+         if(s.size()%2 != 0) return false;
+         stack<char> str;
+         map<char, char>::iterator it_p;
+         for(int i=0; i<s.size(); i++){
+             it_p = pmap.find(s[i]);
+             if(it_p!=pmap.end()) str.push(s[i]); // found the open parenthese
+             else if(str.empty()) return false;   // found the close parenthese
+             else {
+                 map<char, char>::iterator it_q = pmap.find(str.top());
+                 if(it_q->second == s[i]) str.pop();   //用指针时一定要设itrerator
+                 else return false;
+             }
+         }
+        if(str.empty()) return true;
+        else return false;
+        
+    }
+};
+
+#21 merge 2 sorted linked list
+/**
+ * Definition for singly-linked list.
+ * struct ListNode {
+ *     int val;
+ *     ListNode *next;
+ *     ListNode(int x) : val(x), next(NULL) {}
+ * };
+ */
+class Solution {
+public:
+    ListNode* mergeTwoLists(ListNode* l1, ListNode* l2) {
+        if(l1==NULL) return l2;
+        if(l2==NULL) return l1;
+        ListNode head(0);
+        ListNode* l3 = &head;
+        while(l1&&l2){
+            if(l1->val > l2->val){
+                l3->next = l2;
+                l2 = l2->next;
+            }
+            else{
+                l3->next = l1;
+                l1 = l1->next;
+            }
+            l3 = l3->next;
+        }
+        l3->next = l1 ? l1: l2;
+        return head.next;
+    }
+};
+#26 remove duplicates from sorted array
+class Solution {
+public:
+    int removeDuplicates(vector<int>& nums) {
+        int count = 1;
+        if(nums.size()==0) return 0;
+        for(int i=1; i<nums.size(); i++){
+            if(nums[i]!=nums[i-1]){
+                nums[count]=nums[i];
+                count++;
+            }
+        }
+        return count;
+    }
+};
+
+class Solution {
+public:
+    int removeDuplicates(vector<int>& nums) {
+        if(nums.size()<=1) return nums.size();
+        int tmp1 = 0, tmp2 = 1;
+        while(tmp2<nums.size()){
+            if(nums[tmp1]==nums[tmp2])
+                tmp2++;
+            else
+                swap(nums[++tmp1], nums[tmp2++]);
+        }
+        return tmp1+1;
+    }
+};
+
+#27 Remove elements
+class Solution {
+public:
+    int removeElement(vector<int>& nums, int val) {
+        int idx = 0;
+        if(nums.size()==0) return 0;
+        for(int i=0; i<nums.size(); i++){
+            if(nums[i]!=val){
+                nums[idx]=nums[i];
+                idx++;
+            }
+        }
+    return idx++;
+    }
+};
+
+public:
+ #28 find string in string
+class Solution {
+   int strStr(string haystack, string needle) {
+    if(needle=="") return 0;
+    for(int i=0,j=0; i<haystack.size();){
+        if(haystack[i]==needle[j]){
+            if(j==needle.size()-1) return i-j;
+            else{ 
+                j++;
+                i++;
+            }
+        }
+        else {
+            i=i-j+1;
+            j=0;
+        }
+    }
+    return -1;
+    }
+};
+
+#36 check valid sudoku
+class Solution {
+public:
+    bool isValidSudoku(vector<vector<char>>& board) {
+        int rows[9][9]={0};
+        int cols[9][9]={0};
+        int block[3][3][9]={0};
+        for(int i=0;i<board.size();i++){
+            for(int j=0;j<board[i].size();j++){
+                if(board[i][j]!='.'){
+                    int number = board[i][j]-'1'; 
+                    if(rows[i][number]) return 0;
+                    if(cols[j][number]) return 0;
+                    if(block[i/3][j/3][number]) return 0;
+                    rows[i][number]=cols[j][number]=block[i/3][j/3][number]=1;
+                }
+            }
+        }
+        return 1;
+    }
+};
+
+#58 Length of last word
+class Solution {
+public:
+    int lengthOfLastWord(string s) {
+        int j=0;
+        for(int i=0; i<s.size(); i++){
+            if(s[i]!=' ') j++;
+            else if(s[i+1]&&s[i+1]!=' ') j=0;
+        }
+    return j;
+    }
+}; //考虑"a  "的情况
+
+#67 Add Binary
+class Solution {
+public:
+    string addBinary(string a, string b) {
+        int n = a.length()-1;
+        int m = b.length()-1;
+        string result = "";
+        int flag = 0, val = 0;
+        while(n>=0||m>=0||flag==1){
+            flag += n>=0 ? a[n--]-'0': 0;
+            flag += m>=0 ? b[m--]-'0': 0;
+            result = char(flag%2 + '0') + result;
+            flag /= 2;
+        }
+        return result;
+    }
+};                                         //巧用 expression? true: false; 记住这种算法
+
+#83 delete duplicates form linked list
+class Solution {
+public:
+    ListNode* deleteDuplicates(ListNode* head) {
+        if (head==NULL) return NULL;
+        ListNode* cur = head;     //引用
+        
+        while(cur){
+            if(cur->next){
+                cur->val==cur->next->val ? cur->next = cur->next->next : cur = cur->next;
+            }
+            else break;
+        }
+            
+    return head; 
+    }
+
+};
+
+#70 climbing stairs
+class Solution {
+public:
+    int climbStairs(int n) {
+        int arr[n+1];
+        arr[0]=1;
+        arr[1]=1;
+        for(int i=2;i<=n; i++){
+            arr[i]=arr[i-2]+arr[i-1];
+        }
+        int result = arr[n];
+        return result;
+    }
+};     //可以用递归算法，当爬上n节时的方法数，等于从n-1节爬一格或者从n-2节爬两格。所以方法数为爬n-1的方法+爬n-2的方法，以此类推。
+
+#88 Merge Sorted array
+class Solution {
+public:
+    void merge(vector<int>& nums1, int m, vector<int>& nums2, int n) {
+        int i = m-- + n--;
+        while(n>=0){
+            nums1[--i] = ((m>=0)&&nums1[m]>nums2[n]) ? nums1[m--] : nums2[n--];
+        }
+    }
+};
+//如果在原数组上改动可以用逆向思维，从尾到头，不用占空间。 --在前先执行，--在后后执行。
+
+#100 Same tree
+/**
+ * Definition for a binary tree node.
+ * struct TreeNode {
+ *     int val;
+ *     TreeNode *left;
+ *     TreeNode *right;
+ *     TreeNode(int x) : val(x), left(NULL), right(NULL) {}
+ * };
+ */
+class Solution {
+public:
+    bool isSameTree(TreeNode* p, TreeNode* q) {
+        if(p==NULL&&q==NULL) return true;
+        else if(p!=NULL&&q!=NULL){
+                if(p->val==q->val && isSameTree(p->left,q->left)&&isSameTree(p->right,q->right)) return true;
+                else return false;
+
+        }
+        else return false;
+    }
+};// 用recursion做，类似于traversal.
+class Solution {
+public:
+    bool isSameTree(TreeNode* p, TreeNode* q) {
+        if(p==NULL && q==NULL) return true;
+        else if(p==NULL || q==NULL) return false;
+        if(p->val!=q->val) return false;
+        else
+            return isSameTree(p->left, q->left) && isSameTree(p->right, q->right);
+    }
+};
+#101 isSymmetric
+//NULL 与 empty 是不一样的
+class Solution {
+public:
+    bool isSymmetric(TreeNode* root) {
+        if(!root) return true;
+        queue<TreeNode*> q1, q2;
+        TreeNode* l;
+        TreeNode* r;
+        
+        q1.push(root->left);
+        q2.push(root->right);
+        
+        while(!q1.empty() && !q2.empty()){
+            l = q1.front();
+            q1.pop();
+            r = q2.front(); 
+            q2.pop();
+            if(NULL==l && NULL==r) continue;
+            if(NULL==l||NULL==r) return false;
+            if(l->val!=r->val) return false;
+            
+            
+            q1.push(l->left);
+            q1.push(l->right);
+            q2.push(r->right);
+            q2.push(r->left);
+        }
+            
+        
+        return true;
+            
+#102 Binary Tree Level Order traversal
+//把vector分解做
+class Solution {
+public:
+    vector<vector<int>> levelOrder(TreeNode* root) {
+        if(!root) return {};
+        vector<vector<int>> result;
+        vector<int> row;
+        TreeNode* curr;
+        queue<TreeNode*> q;
+        q.push(root);
+        int count = 1;
+        
+        while(!q.empty()){
+                curr = q.front();
+                row.push_back(curr->val);
+                q.pop();
+                count--;
+                if(curr->left) q.push(curr->left);
+                if(curr->right) q.push(curr->right);
+                if(count==0){
+                    count = q.size();
+                    result.push_back(row);
+                    row.clear(); //clear content
+                }
+        }
+        return result;
+    }
+};
+
+class Solution {
+private:
+vector<vector<int>> result;
+public:
+    vector<vector<int>> levelOrder(TreeNode* root) {
+        buildVector(root, 0);
+        return result;
+    }
+    void buildVector(TreeNode* root, int depth){
+        if(!root) return;
+        if(result.size()==depth)
+            result.push_back(vector<int>());
+        result[depth].push_back(root->val);
+        buildVector(root->left, depth+1);
+        buildVector(root->right, depth+1);
+    }
+};
+//In JAVA
+/**
+ * Definition for a binary tree node.
+ * public class TreeNode {
+ *     int val;
+ *     TreeNode left;
+ *     TreeNode right;
+ *     TreeNode(int x) { val = x; }
+ * }
+ */
+public class Solution {
+    public List<List<Integer>> levelOrder(TreeNode root) {
+        ArrayList<List<Integer>> result = new ArrayList<List<Integer>>();
+        if(root==null) return result;
+        ArrayList<TreeNode> level = new ArrayList<TreeNode>();
+        level.add(root);
+        while(!level.isEmpty()){
+            ArrayList<Integer> current = new ArrayList<Integer>();
+            ArrayList<TreeNode> next = new ArrayList<TreeNode>();
+            for(TreeNode n: level){
+                current.add(n.val);
+                if(n.left!=null) next.add(n.left);
+                if(n.right!=null) next.add(n.right);
+            }
+            result.add(current);  //改成add(0,current)则为加在start of the list, 变成从leaf 到 root
+            level = next;
+        }
+        return result;
+    }
+}
+
+#104 max depth of binary tree
+class Solution {
+public:
+    int maxDepth(TreeNode* root) {
+        int max_dept;
+        max_dept = root? 1 + max(maxDepth(root->left),maxDepth(root->right)) : 0;
+        return max_dept;
+    }
+    
+};// using separate and conqure, 每一级为下一级加一
+
+#107 Binary Tree Order traversal II（leaf to root)
+class Solution {
+public:
+    vector<vector<int>> levelOrderBottom(TreeNode* root) {
+        vector<vector<int>> result;
+        vector<int> row;
+        if(!root) return {};
+        queue<TreeNode*> q;
+        q.push(root);
+        int count = 1;
+        
+        while(!q.empty()){
+            row.push_back(q.front()->val);
+            if(q.front()->left) q.push(q.front()->left);
+            if(q.front()->right) q.push(q.front()->right);
+            q.pop();
+            count--;
+            if(count==0){
+                count = q.size();
+                result.insert(result.begin(), row);
+                row.clear();
+            }
+        }
+        return result;
+    }
+};
+
+#110 balanced Binary Tree
+class Solution {
+public:
+    int depth(TreeNode* root){
+        int max_depth;
+        max_depth = root? 1 + max(depth(root->left),depth(root->right)): 0;
+        return max_depth;
+    }
+    bool isBalanced(TreeNode* root) {
+            if(!root) return true;
+            if(abs(depth(root->left)-depth(root->right))<2 && isBalanced(root->left) && isBalanced(root->right)) return true;
+            else return false;
+    }
+};
+
+#111 Minimum depth from root to leaf(root is not a leaf node)
+class Solution {
+public:
+    int minDepth(TreeNode* root) {
+        if(!root) return 0;
+        if(!root->left) return 1 + minDepth(root->right);
+        if(!root->right) return 1 + minDepth(root->left); //only leaf node will return 0;
+        int min_depth =1 + min(minDepth(root->left), minDepth(root->right));
+        return min_depth;
+    }
+};
+
+#112 Path Sum
+class Solution {
+public:
+    bool hasPathSum(TreeNode* root, int sum) {
+        if(!root) return false;
+        if(root->left==NULL && root->right == NULL && sum-root->val==0) return true;
+        return hasPathSum(root->left, sum-root->val) || hasPathSum(root->right, sum-root->val);
+    }
+};
+
+
+#113 Path Sum II
+public:
+    vector<vector<int>> pathSum(TreeNode* root, int sum) {
+        vector<vector<int>> result;
+        vector<int> row(0);
+        PathSum(root, sum, result, row);
+        return result;
+        
+    }
+    void PathSum(TreeNode* root, int sum, vector<vector<int>>& res, vector<int>& path){
+        if(!root) return;
+        if(root->left==NULL&&root->right==NULL&& sum==root->val){
+            path.push_back(root->val);
+            res.push_back(path);
+            path.pop_back();
+            return;
+        }
+        int cur_sum  = sum - root->val;
+        path.push_back(root->val);
+        PathSum(root->left, cur_sum, res, path);
+        PathSum(root->right, cur_sum, res, path);
+        path.pop_back(); //make sure not only one answer will be returned. Return to upper level.
+    }
+    
+};
+
+#114 flatted binary tree (tree to linked_list)
+class Solution {
+public:
+    TreeNode * tail;  //用全局变量永远指向循环的最后一个点
+    void flatten(TreeNode* root) {
+       if(!root) return;
+           tail = root;
+           TreeNode* tmp = root->right;
+           root->right = root->left;
+           root->left = NULL;
+           flatten(root->right);
+           tail->right = tmp;
+           flatten(tmp);
+       }
+
+};
+
+#118 Pascal Triangle
+class Solution {
+public:
+    vector<vector<int>> generate(int numRows) {
+        if(numRows==0) return {};
+        vector<vector<int>> res(numRows);
+        
+        for(int i=0; i <numRows; i++){
+            res[i].resize(i+1);
+            res[i][0]=res[i][i] =1;
+            for(int j=1; j<i; j++){
+                res[i][j]= res[i-1][j-1]+ res[i-1][j];
+            }
+        }
+    return res;
+    }
+};
+
+#119 Pascal Triangle II
+class Solution {
+public:
+    vector<int> getRow(int rowIndex) {
+        vector<int> res(rowIndex+1);
+        res[0]=1;
+        for(int i=1; i<=rowIndex; i++)
+            for(int j=i; j>0; j--){
+                res[j] += res[j-1];
+            }
+        return res;
+    }
+};
+
+#125 Valid palindrome 回文数 e.g 1a2b3b2a1
+class Solution {
+public:
+    bool isPalindrome(string s) {
+        int l = s.length();
+            for(int i=0,j=0; i<l-j-1;){
+                if(!isalnum(s[i])){ i++; continue;}
+                if(!isalnum(s[l-j-1])){ j++; continue;}
+                if(tolower(s[i])!=tolower(s[l-j-1])) return false;
+                else{
+                    i++;
+                    j++;
+                }
+            }
+        return true;
+    }
+}; //isalnum
+
+#155 Min stack
+public:
+    stack<int> data;
+    stack<int> min;
+    
+    void push(int x) {
+        data.push(x);
+        if(min.empty()||x<=min.top()) min.push(x);
+        return;
+    }
+
+    void pop() {
+        if(data.top()==min.top()) 
+        min.pop();
+        data.pop();
+        return;
+    }
+
+    int top() {
+        return data.top();
+    }
+
+    int getMin() {
+        return min.top();
+    }
+};
+
+#189 Rotate Array O(1) extra space: reverse left part, reverse right part, then reverse the whole array
+class Solution {
+public:
+    void rotate(vector<int>& nums, int k) {
+        int n=nums.size();
+        if(n==0||k<=0) return;
+        k%=n;    // in case of k>n
+        reverse(nums, 0, n-k-1);
+        reverse(nums, n-k, n-1);
+        reverse(nums, 0, n-1);
+
+    }
+    void reverse(vector<int>& nums, int left, int right){
+        while(left<right){
+            int tmp = nums[right];
+            nums[right--]= nums[left];
+            nums[left++] = tmp;
+        }
+    }
+};
+
+#206 reverse linked list using c++
+class Solution {
+public:
+    ListNode* reverseList(ListNode* head) {
+        if(!head) return head;
+        ListNode* next = head->next;
+        head->next=NULL;
+        
+        while(next){
+            ListNode* tmp = next->next;
+            next->next = head;
+            head = next;
+            next = tmp;
+        }
+        return head;
+    }
+};
+
+#217 contains duplicates
+class Solution {
+public:
+    bool containsDuplicate(vector<int>& nums) {
+        return nums.size() > set<int>(nums.begin(), nums.end()).size();        
+    }
+};
+// sets are containers that store unique elements(remove duplicates automatically)
+class Solution {
+public:
+    bool containsDuplicate(vector<int>& nums) {
+        unordered_map<int, int> hash;
+        vector<int>::iterator it = nums.begin();
+
+        for (; it != nums.end(); it++){
+            if (hash.find(*it) != hash.end()){
+                return true;
+            }
+            hash[*it] = 1;
+        }
+
+        return false;
+    }
+};用hashmap做， 对于vector取特定的值要用iterator,可以看做一种特殊的指针， 用*it表示指向的值。
+
+#225 implement stack using queue
+
+class Stack {
+public:
+    queue<int> q;
+    // Push element x onto stack.
+    void push(int x) {
+        q.push(x);
+        for(int i=0; i<q.size()-1; i++){
+            q.push(q.front()); //queue: back in, front out
+            q.pop();
+        }
+    }
+    // Removes the element on top of the stack.
+    void pop() {
+        q.pop();
+    }
+
+    // Get the top element.
+    int top() {
+        return q.front();
+    }
+
+    // Return whether the stack is empty.
+    bool empty() {
+        return q.empty();
+    }
+};
+
+#257 Binary Tree Paths
+class Solution {
+public:
+    vector<string> binaryTreePaths(TreeNode* root) {
+        vector<string> result;
+        if(!root) return result;
+        addPath(root, result, to_string(root->val));
+        return result;
+    }
+    
+    void addPath(TreeNode* root, vector<string>& result, string curr_path){
+        if(root->left==NULL&&root->right==NULL){
+            result.push_back(curr_path);
+            return;
+        }
+        if(root->left)
+            addPath(root->left, result, curr_path + "->" + to_string(root->left->val));
+        if(root->right)
+            addPath(root->right, result, curr_path + "->" + to_string(root->right->val));
+        return;
+    }
+};
+
+#258 Add Digits
+class Solution {
+public:
+    int addDigits(int num) {
+        int result = num;
+        while(result>=10){
+            int temp=0;
+            while(result>0){
+                temp += result%10;
+                result /= 10;
+            }
+            result = temp;
+        }
+        return result;
+    }
+};
+
+New Method: If an integer is like 100a+10b+c, then (100a+10b+c)%9=(a+99a+b+9b+c)%9=(a+b+c)%9
+class Solution {
+public:
+    int addDigits(int num) {
+        int result = num%9;
+        return num!=0&&result==0 ? 9 : result;
+    }
+};
+
+#263 Ugly number
+class Solution {
+public:
+    bool isUgly(int num) {
+        if(num==0) return false;
+        if(num==1) return true;
+        if(num%2==0)
+           return isUgly(num/2);
+        else if(num%3==0)
+            return isUgly(num/3);
+        else if(num%5==0)
+            return isUgly(num/5);
+        else
+            return false;
+    }
+};
+
+#283 Move Zeros
+class Solution {
+public:
+    void moveZeroes(vector<int>& nums) {
+        int left = 0, right = 0;
+        while(right<nums.size()){
+            if(nums[right]!=0){
+                swap(nums[left], nums[right]);
+                left++;
+            }
+            right++;
+        }
+    }
+};
